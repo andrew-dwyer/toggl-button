@@ -9,6 +9,7 @@ var PopUp = {
   $postStartText: " post-start popup",
   $popUpButton: null,
   $togglButton: document.querySelector(".stop-button"),
+  $remainingButton: document.querySelector(".calc-remaining"),
   $resumeButton: document.querySelector(".resume-button"),
   $errorLabel: document.querySelector(".error"),
   $editButton: document.querySelector(".edit-button"),
@@ -452,6 +453,70 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   PopUp.$togglButton.addEventListener('click', onClickSendMessage);
   PopUp.$resumeButton.addEventListener('click', onClickSendMessage);
+  PopUp.$remainingButton.addEventListener('click', function(a,b,c){
+
+    console.log(TogglButton.$user.workspaces[0].id);
+
+
+
+    var workspaceId = TogglButton.$user.workspaces[0].id;
+    var today = new Date().toISOString().slice(0, 10);
+    TogglButton.ajax("/summary?workspace_id=" + workspaceId + "&since=" + today + "&user_agent=api_test", {
+      method: 'GET',
+      // payload: entry,
+      baseUrl: "https://toggl.com/reports/api/v2",
+      onLoad: function (xhr) {
+        // debugger;
+        if (xhr.status === 200) {
+          console.log(JSON.parse(xhr.responseText).data);
+          var res = JSON.parse(xhr.responseText);
+          var totalMilli = res.total_grand;
+          if(TogglButton.$curEntry != null) {
+            totalMilli += new Date() - new Date(TogglButton.$curEntry.start);
+          }
+          var totalMinutes = totalMilli / 1000 / 60;
+          var workDayMinutes = 60*8;
+
+          var remainingMilli = (workDayMinutes * 60 * 1000) - totalMilli;
+
+          var remainingMinutes = workDayMinutes - totalMinutes;
+          var remainingHours = remainingMinutes / 60;
+          // alert(remainingHours.toFixed(2));
+          alert(PopUp.msToTime(remainingMilli));
+
+          // TogglButton.updateEntriesDb();
+          // TogglButton.resetPomodoroProgress();
+          // if (!!timeEntry.respond) {
+          //   sendResponse({success: true, type: "Stop"});
+          //   chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+          //     if (!!tabs[0]) {
+          //       chrome.tabs.sendMessage(tabs[0].id, {type: "stop-entry", user: TogglButton.$user});
+          //     }
+          //   });
+          // }
+          // TogglButton.triggerNotification();
+          // TogglButton.analytics(timeEntry.type, timeEntry.service);
+          // if (cb) {
+          //   cb();
+          // }
+        }
+      },
+      onError: function (xhr) {
+        debugger;
+        // sendResponse(
+        //     {
+        //       success: false,
+        //       type: "Update"
+        //     }
+        // );
+      }
+    });
+    
+    
+    
+    // alert(PopUp.msToTime(new Date() - new Date(TogglButton.$curEntry.start)));
+
+  });
 
   document.querySelector(".settings-button").addEventListener('click', function () {
     chrome.runtime.openOptionsPage();
